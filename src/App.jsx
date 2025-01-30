@@ -2,7 +2,11 @@ import React, { useState, useEffect } from "react";
 import Lottie from "lottie-react";
 import coinAnimation from "./assets/coin-animation.json";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faCheck } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faCheck,
+  faBookmark,
+} from "@fortawesome/free-solid-svg-icons";
 import "./index.css";
 
 function App() {
@@ -21,6 +25,10 @@ function App() {
     const savedCoins = localStorage.getItem("coins");
     return savedCoins ? parseInt(savedCoins, 10) : 0;
   });
+  const [bookmarkedGifs, setBookmarkedGifs] = useState(() => {
+    const saved = localStorage.getItem("bookmarkedGifs");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   useEffect(() => {
     fetchCatGif();
@@ -37,6 +45,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem("coins", coins);
   }, [coins]);
+
+  useEffect(() => {
+    localStorage.setItem("bookmarkedGifs", JSON.stringify(bookmarkedGifs));
+  }, [bookmarkedGifs]);
 
   const fetchCatGif = async () => {
     try {
@@ -80,9 +92,19 @@ function App() {
     localStorage.setItem("todos", JSON.stringify(newTodos));
   };
 
+  const handleBookmarkGif = () => {
+    if (catGif && !bookmarkedGifs.includes(catGif)) {
+      setBookmarkedGifs([...bookmarkedGifs, catGif]);
+    }
+  };
+
+  const removeBookmark = (gifUrl) => {
+    setBookmarkedGifs(bookmarkedGifs.filter((url) => url !== gifUrl));
+  };
+
   return (
-    <div className="min-h-screen gap-4 bg-gray-800 flex flex-col p-4 relative sm:items-center justify-between sm:justify-center">
-      <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-lg lg:max-w-xl sm:mb-4">
+    <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center p-4 relative">
+      <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
         <h1 className="text-xl font-bold mb-4 text-center text-gray-900">
           Purrfect Tasks
         </h1>
@@ -99,11 +121,20 @@ function App() {
           </span>
         </div>
         {catGif && (
-          <img
-            src={catGif}
-            alt="Random Cat"
-            className="w-full h-48 object-cover rounded pixel-border mb-4"
-          />
+          <div className="relative">
+            <img
+              src={catGif}
+              alt="Random Cat"
+              className="w-full h-48 object-cover rounded pixel-border mb-4"
+            />
+            <button
+              onClick={handleBookmarkGif}
+              className="absolute top-2 right-2 pixel-button p-1 rounded bg-white/80 hover:bg-white"
+              title="Save this GIF"
+            >
+              <FontAwesomeIcon icon={faBookmark} className="text-gray-900" />
+            </button>
+          </div>
         )}
         <div className="flex flex-col sm:flex-row mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
           <input
@@ -172,11 +203,38 @@ function App() {
             </button>
           </div>
         )}
+        {bookmarkedGifs.length > 0 && (
+          <div className="mt-4">
+            <h2 className="text-lg font-bold mb-2 text-gray-900">
+              Bookmarked GIFs
+            </h2>
+            <div className="grid grid-cols-2 gap-2">
+              {bookmarkedGifs.map((gif, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={gif}
+                    alt={`Bookmarked ${index}`}
+                    className="rounded pixel-border w-full h-32 object-cover"
+                  />
+                  <button
+                    onClick={() => removeBookmark(gif)}
+                    className="absolute top-0 right-0 pixel-button p-1 rounded bg-red-500/80 hover:bg-red-600"
+                  >
+                    <FontAwesomeIcon
+                      icon={faTrash}
+                      className="text-white text-xs"
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="sm:absolute relative bottom-4 w-full text-center mt-4">
+      <div className="sm:absolute bottom-4 w-full text-center mt-4">
         <div className="text-gray-400 text-xs hover:text-gray-300 transition-colors">
-          <a href="https://linktr.ee/igorfel">Developed by 🤖 Livingbots</a>
+          Developed by 🤖 Livingbots
         </div>
       </div>
     </div>

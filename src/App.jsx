@@ -6,6 +6,7 @@ import {
   faTrash,
   faCheck,
   faBookmark,
+  faShare,
 } from "@fortawesome/free-solid-svg-icons";
 import "./index.css";
 
@@ -31,7 +32,9 @@ function App() {
   });
 
   useEffect(() => {
-    fetchCatGif();
+    const urlParams = new URLSearchParams(window.location.search);
+    const gifId = urlParams.get("gifId");
+    fetchCatGif(gifId);
   }, []);
 
   useEffect(() => {
@@ -50,13 +53,20 @@ function App() {
     localStorage.setItem("bookmarkedGifs", JSON.stringify(bookmarkedGifs));
   }, [bookmarkedGifs]);
 
-  const fetchCatGif = async () => {
+  const fetchCatGif = async (gifId) => {
     try {
-      const response = await fetch(
-        "https://api.thecatapi.com/v1/images/search?mime_types=gif"
-      );
+      const endpoint = gifId
+        ? `https://api.thecatapi.com/v1/images/${gifId}`
+        : "https://api.thecatapi.com/v1/images/search?mime_types=gif";
+
+      const response = await fetch(endpoint);
       const data = await response.json();
-      setCatGif(data[0]?.url || "");
+
+      const gifUrl = Array.isArray(data) ? data[0]?.url : data?.url;
+
+      if (gifUrl) {
+        setCatGif(gifUrl);
+      }
     } catch (error) {
       console.error("Error fetching cat GIF:", error);
     }
@@ -102,6 +112,26 @@ function App() {
     setBookmarkedGifs(bookmarkedGifs.filter((url) => url !== gifUrl));
   };
 
+  const handleShareGif = async (gifUrl) => {
+    try {
+      const targetUrl = gifUrl || catGif;
+      const gifId = targetUrl?.split("/").pop()?.split(".")[0] || "";
+      const shareUrl = `${window.location.origin}${window.location.pathname}?gifId=${gifId}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: "Check out this cat GIF!",
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("Shareable link copied to clipboard!");
+      }
+    } catch (error) {
+      console.error("Sharing failed:", error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center p-4 relative">
       <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
@@ -127,13 +157,22 @@ function App() {
               alt="Random Cat"
               className="w-full h-48 object-cover rounded pixel-border mb-4"
             />
-            <button
-              onClick={handleBookmarkGif}
-              className="absolute top-2 right-2 pixel-button p-1 rounded bg-white/80 hover:bg-white"
-              title="Save this GIF"
-            >
-              <FontAwesomeIcon icon={faBookmark} className="text-gray-900" />
-            </button>
+            <div className="absolute top-2 right-2 flex flex-col space-y-2">
+              <button
+                onClick={handleBookmarkGif}
+                className="pixel-button p-1 rounded bg-white/80 hover:bg-white"
+                title="Save this GIF"
+              >
+                <FontAwesomeIcon icon={faBookmark} className="text-gray-900" />
+              </button>
+              <button
+                onClick={() => handleShareGif(catGif)}
+                className="pixel-button p-1 rounded bg-white/80 hover:bg-white"
+                title="Share this GIF"
+              >
+                <FontAwesomeIcon icon={faShare} className="text-gray-900" />
+              </button>
+            </div>
           </div>
         )}
         <div className="flex flex-col sm:flex-row mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
@@ -216,15 +255,28 @@ function App() {
                     alt={`Bookmarked ${index}`}
                     className="rounded pixel-border w-full h-32 object-cover"
                   />
-                  <button
-                    onClick={() => removeBookmark(gif)}
-                    className="absolute top-0 right-0 pixel-button p-1 rounded bg-red-500/80 hover:bg-red-600"
-                  >
-                    <FontAwesomeIcon
-                      icon={faTrash}
-                      className="text-white text-xs"
-                    />
-                  </button>
+                  <div className="absolute top-0 right-0 flex flex-col space-y-1">
+                    <button
+                      onClick={() => handleShareGif(gif)}
+                      className="pixel-button p-1 rounded bg-white/80 hover:bg-white"
+                      title="Share this GIF"
+                    >
+                      <FontAwesomeIcon
+                        icon={faShare}
+                        className="text-gray-900 text-xs"
+                      />
+                    </button>
+                    <button
+                      onClick={() => removeBookmark(gif)}
+                      className="pixel-button p-1 rounded bg-red-500/80 hover:bg-red-600"
+                      title="Remove bookmark"
+                    >
+                      <FontAwesomeIcon
+                        icon={faTrash}
+                        className="text-white text-xs"
+                      />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

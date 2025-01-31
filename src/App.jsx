@@ -34,6 +34,10 @@ function App() {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const gifId = urlParams.get("gifId");
+    if (gifId) {
+      urlParams.delete("gifId");
+      window.location.replace("/");
+    }
     fetchCatGif(gifId);
   }, []);
 

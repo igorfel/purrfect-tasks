@@ -33,14 +33,12 @@ function App() {
     const saved = localStorage.getItem("bookmarkedGifs");
     return saved ? JSON.parse(saved) : [];
   });
+  const [showCoinsModal, setShowCoinsModal] = useState(false);
 
-  // Load gif from url
   useEffect(() => {
     if (catGif) return;
 
-    // Read the parameter value
     const gifId = searchParams.get("gifId");
-
     if (searchParams.has("gifId")) {
       searchParams.delete("gifId");
       setSearchParams(searchParams);
@@ -69,16 +67,10 @@ function App() {
       const endpoint = gifId
         ? `https://api.thecatapi.com/v1/images/${gifId}`
         : "https://api.thecatapi.com/v1/images/search?mime_types=gif";
-
       const response = await fetch(endpoint);
       const data = await response.json();
-
       const gifUrl = Array.isArray(data) ? data[0]?.url : data?.url;
-
-      if (gifUrl) {
-        setCatGif(gifUrl);
-        // Remove the parameter
-      }
+      if (gifUrl) setCatGif(gifUrl);
     } catch (error) {
       console.error("Error fetching cat GIF:", error);
     }
@@ -115,8 +107,13 @@ function App() {
   };
 
   const handleBookmarkGif = () => {
+    if (coins <= 0) {
+      setShowCoinsModal(true);
+      return;
+    }
     if (catGif && !bookmarkedGifs.includes(catGif)) {
       setBookmarkedGifs([...bookmarkedGifs, catGif]);
+      setCoins(coins - 1);
     }
   };
 
@@ -146,7 +143,27 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center p-4 relative">
+      {showCoinsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-sm">
+            <p className="text-gray-900 mb-4 text-center">Not Enough Coins</p>
+            <p className="text-gray-900 mb-4 text-center text-sm">
+              Complete tasks to earn coins and unlock GIF bookmarking!
+            </p>
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowCoinsModal(false)}
+                className="pixel-button px-4 py-2 text-gray-900"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
+        {/* Rest of the existing JSX remains unchanged */}
         <h1 className="text-xl font-bold mb-4 text-center text-gray-900">
           Purrfect Tasks
         </h1>
@@ -167,7 +184,7 @@ function App() {
             <img
               src={catGif}
               alt="Random Cat"
-              className="w-full h-48 object-cover rounded pixel-border mb-4"
+              className="w-full h-48 object-cover rounded pixel-border mb-4 pointer-events-none"
             />
             <div className="absolute top-2 right-2 flex flex-col space-y-2">
               <button
@@ -257,7 +274,7 @@ function App() {
         {bookmarkedGifs.length > 0 && (
           <div className="mt-4">
             <h2 className="text-lg font-bold mb-2 text-gray-900">
-              Bookmarked GIFs
+              Bookmarked GIFs ({bookmarkedGifs.length})
             </h2>
             <div className="grid grid-cols-2 gap-2">
               {bookmarkedGifs.map((gif, index) => (

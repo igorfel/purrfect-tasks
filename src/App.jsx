@@ -36,7 +36,7 @@ function App() {
     const gifId = urlParams.get("gifId");
     if (gifId) {
       urlParams.delete("gifId");
-      window.location.replace("/");
+      // window.location.replace("/");
     }
     fetchCatGif(gifId);
   }, []);

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Lottie from "lottie-react";
 import coinAnimation from "./assets/coin-animation.json";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useSearchParams } from "react-router-dom";
 import {
   faTrash,
   faCheck,
@@ -11,6 +12,7 @@ import {
 import "./index.css";
 
 function App() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [todos, setTodos] = useState(() => {
     const savedTodos = localStorage.getItem("todos");
     return savedTodos ? JSON.parse(savedTodos) : [];
@@ -21,6 +23,7 @@ function App() {
   });
   const [animatingTodos, setAnimatingTodos] = useState([]);
   const [input, setInput] = useState("");
+  const [catGifId, setCatGifId] = useState("");
   const [catGif, setCatGif] = useState("");
   const [coins, setCoins] = useState(() => {
     const savedCoins = localStorage.getItem("coins");
@@ -31,15 +34,19 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Load gif from url
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const gifId = urlParams.get("gifId");
-    if (gifId) {
-      urlParams.delete("gifId");
-      // window.location.replace("/");
+    if (catGif) return;
+
+    // Read the parameter value
+    const gifId = searchParams.get("gifId");
+
+    if (searchParams.has("gifId")) {
+      searchParams.delete("gifId");
+      setSearchParams(searchParams);
     }
     fetchCatGif(gifId);
-  }, []);
+  }, [catGif, searchParams, setSearchParams]);
 
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
@@ -70,6 +77,7 @@ function App() {
 
       if (gifUrl) {
         setCatGif(gifUrl);
+        // Remove the parameter
       }
     } catch (error) {
       console.error("Error fetching cat GIF:", error);

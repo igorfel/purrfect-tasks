@@ -8,6 +8,7 @@ import {
   faCheck,
   faBookmark,
   faShare,
+  faDownload,
 } from "@fortawesome/free-solid-svg-icons";
 import "./index.css";
 
@@ -33,7 +34,7 @@ function App() {
     const saved = localStorage.getItem("bookmarkedGifs");
     return saved ? JSON.parse(saved) : [];
   });
-  const [showCoinsModal, setShowCoinsModal] = useState(false);
+  const [modal, setModal] = useState({ show: false, message: "" });
 
   useEffect(() => {
     if (catGif) return;
@@ -108,13 +109,35 @@ function App() {
 
   const handleBookmarkGif = () => {
     if (coins <= 0) {
-      setShowCoinsModal(true);
+      setModal({
+        show: true,
+        message: "Complete tasks to earn coins and unlock GIF bookmarking!",
+      });
       return;
     }
     if (catGif && !bookmarkedGifs.includes(catGif)) {
       setBookmarkedGifs([...bookmarkedGifs, catGif]);
       setCoins(coins - 1);
     }
+  };
+
+  const handleDownloadGif = (gifUrl) => {
+    if (coins < 10) {
+      setModal({
+        show: true,
+        message:
+          "You need 10 coins to download this GIF. Complete more tasks to earn coins!",
+      });
+      return;
+    }
+
+    const link = document.createElement("a");
+    link.href = gifUrl;
+    link.download = `cat-gif-${Date.now()}.gif`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setCoins(coins - 10);
   };
 
   const removeBookmark = (gifUrl) => {
@@ -143,16 +166,13 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-800 flex flex-col items-center justify-center p-4 relative">
-      {showCoinsModal && (
+      {modal.show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-sm">
-            <p className="text-gray-900 mb-4 text-center">Not Enough Coins</p>
-            <p className="text-gray-900 mb-4 text-center text-sm">
-              Complete tasks to earn coins and unlock GIF bookmarking!
-            </p>
+            <p className="text-gray-900 mb-4 text-center">{modal.message}</p>
             <div className="flex justify-center">
               <button
-                onClick={() => setShowCoinsModal(false)}
+                onClick={() => setModal({ show: false, message: "" })}
                 className="pixel-button px-4 py-2 text-gray-900"
               >
                 Got it!
@@ -163,7 +183,6 @@ function App() {
       )}
 
       <div className="bg-gray-200 p-6 rounded pixel-border w-full max-w-lg lg:max-w-xl max-h-[90vh] overflow-y-auto">
-        {/* Rest of the existing JSX remains unchanged */}
         <h1 className="text-xl font-bold mb-4 text-center text-gray-900">
           Purrfect Tasks
         </h1>
@@ -184,7 +203,7 @@ function App() {
             <img
               src={catGif}
               alt="Random Cat"
-              className="w-full h-48 object-cover rounded pixel-border mb-4 pointer-events-none"
+              className="w-full h-48 object-cover rounded pixel-border mb-4"
             />
             <div className="absolute top-2 right-2 flex flex-col space-y-2">
               <button
@@ -293,6 +312,16 @@ function App() {
                       <FontAwesomeIcon
                         icon={faShare}
                         className="text-gray-900 text-xs"
+                      />
+                    </button>
+                    <button
+                      onClick={() => handleDownloadGif(gif)}
+                      className="pixel-button p-1 rounded bg-blue-500/80 hover:bg-blue-600"
+                      title="Download this GIF (10 coins)"
+                    >
+                      <FontAwesomeIcon
+                        icon={faDownload}
+                        className="text-white text-xs"
                       />
                     </button>
                     <button
